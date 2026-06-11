@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Know Your Crowd 🎤</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d1a;--card:#14142a;--card2:#1c1c38;--border:#2a2a50;
+  --accent:#7c6fff;--accent2:#a78bfa;--gold:#fbbf24;
+  --green:#4ade80;--red:#f87171;--text:#f0eeff;--muted:#9490b5;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;
+  background-image:radial-gradient(ellipse at 15% 15%,rgba(124,111,255,.13) 0,transparent 55%),
+    radial-gradient(ellipse at 85% 85%,rgba(167,139,250,.08) 0,transparent 55%)}
+body{display:flex;flex-direction:column;align-items:center;padding:0 16px 60px}
+
+.screen{width:100%;max-width:620px;display:flex;flex-direction:column;align-items:center;padding-top:24px}
+.screen.fade{animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:26px;width:100%;margin-bottom:14px}
+.card2{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px;width:100%;margin-bottom:10px}
+
+.game-title{font-size:clamp(38px,9vw,64px);font-weight:900;text-align:center;line-height:1;margin-bottom:4px}
+.game-title span{background:linear-gradient(135deg,#fbbf24,#f472b6,#7c6fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:var(--muted);text-align:center;font-size:14px;font-weight:600;margin-bottom:24px}
+
+.host-wrap{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
+.host-icon{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#7c6fff,#f472b6);
+  display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;
+  box-shadow:0 0 18px rgba(124,111,255,.35)}
+.host-bubble{background:var(--card2);border:1px solid var(--border);border-radius:0 16px 16px 16px;
+  padding:11px 15px;font-size:14px;line-height:1.6;flex:1}
+.host-name{font-size:10px;font-weight:800;color:var(--accent2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+
+input[type=text]{width:100%;background:rgba(255,255,255,.05);border:1.5px solid var(--border);
+  border-radius:12px;padding:13px 16px;color:var(--text);font-size:16px;font-family:inherit;
+  outline:none;transition:border-color .2s;margin-bottom:10px}
+input[type=text]:focus{border-color:var(--accent)}
+input[type=text]::placeholder{color:var(--muted)}
+textarea{width:100%;background:rgba(255,255,255,.05);border:1.5px solid var(--border);
+  border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;font-family:inherit;
+  outline:none;transition:border-color .2s;resize:none;min-height:88px;margin-bottom:10px}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--muted)}
+
+.btn{width:100%;padding:15px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#7c6fff,#a78bfa);color:#fff;
+  font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;
+  transition:opacity .15s,transform .1s;margin-top:4px}
+.btn:hover{opacity:.9;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.btn-ghost{width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;
+  background:transparent;color:var(--text);font-size:15px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:all .15s;margin-top:4px}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent2)}
+.btn-ghost:disabled{opacity:.3;cursor:not-allowed}
+
+.section-label{font-size:11px;font-weight:800;color:var(--accent2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+
+.room-code{font-size:48px;font-weight:900;letter-spacing:.22em;color:var(--accent2);text-align:center}
+
+.q-dots{display:flex;gap:7px;margin-bottom:16px}
+.q-dot{width:9px;height:9px;border-radius:50%;background:var(--border);transition:background .2s}
+.q-dot.done{background:var(--accent)}
+.q-dot.cur{background:var(--accent2);box-shadow:0 0 6px var(--accent2)}
+
+.prog-bar{height:5px;background:var(--border);border-radius:100px;overflow:hidden;margin-bottom:18px}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7c6fff,#a78bfa);border-radius:100px;transition:width .4s}
+
+.score-row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;margin-bottom:5px;background:var(--card2)}
+.score-row.leader{background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.22)}
+
+.answer-cards{display:flex;flex-direction:column;gap:9px;margin:10px 0}
+.ans-card{display:flex;align-items:center;gap:11px;padding:12px 14px;
+  background:var(--card2);border:2px solid var(--border);border-radius:12px;
+  cursor:pointer;transition:all .15s;user-select:none}
+.ans-card:hover{border-color:var(--accent)}
+.ans-card.selected{border-color:var(--accent);background:rgba(124,111,255,.14)}
+.ans-lbl{width:24px;height:24px;border-radius:7px;background:rgba(124,111,255,.2);
+  border:1px solid rgba(124,111,255,.35);display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:var(--accent2);flex-shrink:0}
+.ans-text{flex:1;font-size:13px;line-height:1.4;font-weight:600}
+
+.player-btns{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 2px}
+.pl-btn{padding:7px 14px;border-radius:100px;border:2px solid;font-size:13px;
+  font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s}
+.pl-btn.used{opacity:.4}
+.pl-btn:disabled{cursor:not-allowed;opacity:.25}
+
+.result-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;
+  border-radius:10px;margin-bottom:7px;font-size:13px}
+.result-item.correct{background:rgba(74,222,128,.09);border:1px solid rgba(74,222,128,.28)}
+.result-item.wrong{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.22)}
+
+.tip{font-size:12px;color:var(--muted);text-align:center;margin:6px 0 2px;font-weight:600}
+
+.av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#fff;flex-shrink:0}
+.av-lg{width:40px;height:40px;font-size:17px}
+.av-sm{width:26px;height:26px;font-size:11px}
+
+.confetti-bit{position:fixed;pointer-events:none;animation:cfall linear forwards}
+@keyframes cfall{to{transform:translateY(110vh) rotate(800deg);opacity:0}}
+
+.divider{text-align:center;color:var(--muted);font-size:12px;font-weight:700;margin:12px 0 8px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, set, get, update, onValue, runTransaction }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+// ══════════════════════════════════════════════════════════════════════════
+//  FIREBASE CONFIG — replace with yours from console.firebase.google.com
+//  Steps: Create project → Build → Realtime Database → Create (test mode)
+//         Project Settings ⚙ → Your apps → Add web app → copy config
+// ══════════════════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "REPLACE_ME",
+  authDomain:        "REPLACE_ME",
+  databaseURL:       "REPLACE_ME",
+  projectId:         "REPLACE_ME",
+  storageBucket:     "REPLACE_ME",
+  messagingSenderId: "REPLACE_ME",
+  appId:             "REPLACE_ME",
+};
+// ══════════════════════════════════════════════════════════════════════════
+
+const READY = !Object.values(FIREBASE_CONFIG).some(v => v === 'REPLACE_ME');
+let db;
+if (READY) {
+  const app = initializeApp(FIREBASE_CONFIG);
+  db = getDatabase(app);
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────
+const NUM_QS = 4;
+const COLORS  = ['#7c6fff','#f472b6','#4ade80','#fb923c','#60a5fa','#facc15','#e879f9','#2dd4bf'];
+const RANKS   = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+
+const Q_POOL = [
+  "What's your biggest fear?",
+  "Describe yourself in exactly 3 words",
+  "What's your guiltiest pleasure?",
+  "If you could have any superpower, what and why?",
+  "What would your last meal on earth be?",
+  "What do you secretly judge people for?",
+  "What's the most embarrassing thing that's ever happened to you?",
+  "What's one thing nobody knows about you?",
+  "If you could only eat one food forever, what would it be?",
+  "What do you do when nobody is watching?",
+  "What's your most unpopular opinion?",
+  "What's one skill you wish you had?",
+  "Describe your perfect Saturday in one sentence",
+  "What would the title of your autobiography be?",
+  "What animal best represents your personality and why?",
+  "If you could live anywhere in the world, where would it be?",
+];
+
+const JOSH_LINES = [
+  "Interesting energy from {name} today… very colourful. 🌈",
+  "The audience is looking at {name} in a very specific way right now. 👀",
+  "{name} really committed to those answers. Bold. Very bold. 💅",
+  "{name} is deeply in touch with their feelings. Deeply, deeply in touch. 😏",
+  "Our magsasaka friend {name} brings a truly unique energy to this stage. 🌾✨",
+  "Never change, {name}. Actually maybe change a little. Actually no. 🏳️‍🌈",
+];
+const GAMER_LINES = [
+  "Absolute GAMING GENIUS from {name} right there. The crowd is in awe. 🎮",
+  "{name} — methodical, precise, dominant. Pro player energy detected. 🏆",
+  "Someone alert the talent scouts! {name} is built differently. ✨",
+  "{name} reads this game like a mini-map. Always five moves ahead. 🗺️",
+  "The LEGEND himself — {name}. Elite performance, absolutely no notes. 👑",
+  "Coaches worldwide are watching {name} and crying tears of admiration. 🎮",
+];
+const RANDOM_LINES = [
+  "A solid round from {name}! Their mum would be… moderately proud.",
+  "Ah, {name}. An enigma wrapped in a mystery wrapped in a person.",
+  "Science cannot explain {name}. Neither can the host. Moving on.",
+  "If {name} were a weather forecast: partly cloudy, chance of chaos.",
+  "The studio audience has strong feelings about {name}. Strong, wordless feelings.",
+  "Every answer {name} gave was quite the journey. Quite the journey.",
+  "The host rates {name}'s round: 7 out of 10. Points lost for raw chaos.",
+  "{name} bringing a certain je ne sais quoi to proceedings today.",
+];
+
+function sideComment(name) {
+  const n = name.toLowerCase();
+  const pool = /\bjosh(ua)?\b|\bmagsasaka\b/.test(n) ? JOSH_LINES
+    : /\boliver\b|\bdoc\b/.test(n) ? GAMER_LINES : RANDOM_LINES;
+  return pool[Math.floor(Math.random() * pool.length)].replace(/{name}/g, name);
+}
+
+function pickQs() {
+  const p = [...Q_POOL];
+  return Array.from({length: NUM_QS}, () => p.splice(Math.floor(Math.random() * p.length), 1)[0]);
+}
+
+function seededShuffle(arr, seed) {
+  const a = [...arr];
+  let s = 0;
+  for (const c of seed) s = (s * 31 + c.charCodeAt(0)) >>> 0;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function genCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length: 6}, () => c[Math.floor(Math.random() * c.length)]).join('');
+}
+
+function genId() {
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+// ── Player helpers ─────────────────────────────────────────────────────────
+const pColor = idx => COLORS[idx % COLORS.length];
+
+function playerOrder(room) {
+  return room?.playerOrder ? Object.values(room.playerOrder) : [];
+}
+
+function playerAt(room, idx) {
+  const id = playerOrder(room)[idx];
+  return id ? { id, ...(room.players[id] || {}) } : null;
+}
+
+function allAnsweredQ(room, qIdx) {
+  return playerOrder(room).every(id => room.players?.[id]?.answers?.[qIdx]);
+}
+
+function getShuffled(room, turnIdx, qIdx) {
+  const ids = playerOrder(room);
+  const curId = ids[turnIdx];
+  return seededShuffle(
+    ids.filter(id => id !== curId).map(id => ({
+      text:       room.players[id]?.answers?.[qIdx] || '…',
+      playerName: room.players[id]?.name || '?',
+      playerId:   id,
+    })),
+    curId + '_' + qIdx
+  );
+}
+
+function avHtml(idx, sm) {
+  // idx relative to playerOrder; used for coloring
+  const c = pColor(idx);
+  const cls = sm ? 'av av-sm' : 'av av-lg';
+  return `<span class="${cls}" style="background:${c}" data-avslot="${idx}">?</span>`;
+  // text filled after render via fillAvatars
+}
+
+// ── Local state ────────────────────────────────────────────────────────────
+const myId = (() => {
+  let id = sessionStorage.getItem('kyc_pid');
+  if (!id) { id = genId(); sessionStorage.setItem('kyc_pid', id); }
+  return id;
+})();
+
+const L = {
+  code:        '',
+  room:        null,
+  unsub:       null,
+  assigns:     {},   // ansIdx -> playerName, local for current match Q
+  selAns:      null,
+};
+
+// ── DB helpers ─────────────────────────────────────────────────────────────
+const rRef = path => ref(db, `rooms/${L.code}${path ? '/'+path : ''}`);
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  let html;
+
+  if (!READY) {
+    html = sSetup();
+  } else if (!L.code) {
+    html = sHome();
+  } else {
+    const r = L.room;
+    html = !r                       ? sLoading()
+      : r.phase === 'lobby'         ? sLobby(r)
+      : r.phase === 'qa'            ? sQA(r)
+      : r.phase === 'matching'      ? sMatching(r)
+      : r.phase === 'turnResult'    ? sTurnResult(r)
+      : r.phase === 'done'          ? sDone(r)
+      : sLoading();
+  }
+
+  app.innerHTML = `<div class="screen fade">${html}</div>`;
+
+  // Fill avatar initials (we can't call JS in template literals safely with names containing quotes)
+  if (L.room) {
+    const ids = playerOrder(L.room);
+    app.querySelectorAll('[data-avslot]').forEach(el => {
+      const idx = +el.dataset.avslot;
+      const id  = ids[idx];
+      if (id && L.room.players?.[id]) {
+        el.textContent = L.room.players[id].name[0].toUpperCase();
+      }
+    });
+  }
+
+  const inp = app.querySelector('input[type=text],textarea');
+  if (inp) setTimeout(() => inp.focus(), 50);
+}
+
+// ── Screens ────────────────────────────────────────────────────────────────
+function sSetup() {
+  return `
+  <div style="text-align:center;padding-top:10px;margin-bottom:16px">
+    <div style="font-size:50px;margin-bottom:4px">🎤</div>
+    <div class="game-title"><span>KNOW YOUR<br>CROWD</span></div>
+  </div>
+  <div class="card">
+    <div class="host-wrap">
+      <div class="host-icon">⚙️</div>
+      <div class="host-bubble">
+        <div class="host-name">Setup Required</div>
+        This game uses Firebase to sync devices in real time. It's free and takes ~5 minutes to set up!
+      </div>
+    </div>
+    <div class="section-label">How to set up</div>
+    <ol style="color:var(--muted);font-size:14px;line-height:2.1;padding-left:18px">
+      <li>Go to <strong style="color:var(--text)">console.firebase.google.com</strong> and create a project</li>
+      <li>Inside the project: <strong style="color:var(--text)">Build → Realtime Database → Create database</strong> → choose <em>test mode</em></li>
+      <li>Go to <strong style="color:var(--text)">Project Settings ⚙ → Your apps → Add app</strong> (web &lt;/&gt;)</li>
+      <li>Copy your <code style="color:var(--accent2)">firebaseConfig</code> and paste it into <strong style="color:var(--text)">index.html</strong> where it says <code style="color:var(--accent2)">REPLACE_ME</code></li>
+    </ol>
+  </div>`;
+}
+
+function sHome() {
+  return `
+  <div style="text-align:center;padding-top:6px;margin-bottom:10px">
+    <div style="font-size:50px;margin-bottom:4px">🎤</div>
+    <div class="game-title"><span>KNOW YOUR<br>CROWD</span></div>
+    <div class="subtitle">Each player uses their own device!</div>
+  </div>
+  <div class="card">
+    <div class="host-wrap">
+      <div class="host-icon">🎤</div>
+      <div class="host-bubble">
+        <div class="host-name">Alex · Host</div>
+        Create a room and share the code — or join a friend's game!
+      </div>
+    </div>
+    <div class="section-label">Create a new room</div>
+    <input type="text" id="createName" placeholder="Your name…" maxlength="24" onkeydown="if(event.key==='Enter')doCreate()"/>
+    <button class="btn" onclick="doCreate()">Create Room 🎉</button>
+    <div class="divider">— or join an existing one —</div>
+    <input type="text" id="joinName" placeholder="Your name…" maxlength="24"/>
+    <input type="text" id="joinCode" placeholder="Room code (e.g. ABC123)"
+      maxlength="6" style="text-transform:uppercase;letter-spacing:.15em;font-size:18px;font-weight:800;text-align:center"
+      oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doJoin()"/>
+    <button class="btn-ghost" onclick="doJoin()">Join Room →</button>
+  </div>`;
+}
+
+function sLoading() {
+  return `<div style="text-align:center;padding-top:80px">
+    <div style="font-size:44px;margin-bottom:12px;display:inline-block;animation:spin 1s linear infinite">⏳</div>
+    <div style="font-size:17px;font-weight:700;color:var(--muted)">Connecting…</div>
+  </div>`;
+}
+
+function sLobby(r) {
+  const ids = playerOrder(r);
+  const amHost = r.hostId === myId;
+  const canStart = ids.length >= 2;
+
+  const playerRows = ids.map((id, i) => `
+    <div class="score-row">
+      <span style="font-size:15px;width:22px;text-align:center">${id === r.hostId ? '👑' : '👤'}</span>
+      ${avHtml(i, true)}
+      <span style="flex:1;font-weight:700;font-size:14px">${r.players[id]?.name || '?'}${id === myId ? ' <span style="color:var(--muted);font-size:12px">(you)</span>' : ''}</span>
+      ${id === r.hostId ? `<span style="font-size:11px;color:var(--accent2);font-weight:800">HOST</span>` : ''}
+    </div>`).join('');
+
+  return `
+  <div class="card">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px">Room Code</div>
+      <div class="room-code">${L.code}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Share this with your friends!</div>
+    </div>
+    <div class="host-wrap">
+      <div class="host-icon">🎤</div>
+      <div class="host-bubble">
+        <div class="host-name">Alex · Host</div>
+        ${amHost
+          ? (canStart ? 'Everyone\'s in! Start when you\'re ready.' : 'Waiting for more players… (need at least 2)')
+          : `Waiting for the host to start the game…`}
+      </div>
+    </div>
+    <div class="section-label">${ids.length} player${ids.length !== 1 ? 's' : ''} joined</div>
+    ${playerRows}
+    ${amHost ? `<button class="btn" style="margin-top:14px" ${canStart ? '' : 'disabled'} onclick="doStart()">Start Game! 🚀</button>` : ''}
+  </div>`;
+}
+
+function sQA(r) {
+  const qIdx = r.currentQIdx || 0;
+  const question = r.questions?.[qIdx] || '';
+  const myAnswers = r.players?.[myId]?.answers || {};
+  const done = myAnswers[qIdx];
+  const ids = playerOrder(r);
+  const numQs = Object.keys(r.questions || {}).length;
+
+  const dots = Array.from({length: numQs}, (_, i) =>
+    `<div class="q-dot${myAnswers[i] ? ' done' : i === qIdx ? ' cur' : ''}"></div>`
+  ).join('');
+
+  if (done) {
+    const waiting = ids.filter(id => !r.players?.[id]?.answers?.[qIdx]).map(id => r.players[id]?.name || '?');
+    return `
+    <div class="card">
+      <div class="host-wrap">
+        <div class="host-icon">🎤</div>
+        <div class="host-bubble">
+          <div class="host-name">Alex · Host</div>
+          Nice answer! Waiting for everyone to catch up… ⏳
+        </div>
+      </div>
+      <div class="q-dots">${dots}</div>
+      <div style="text-align:center;padding:22px 0">
+        <div style="font-size:34px;margin-bottom:10px">⏳</div>
+        ${waiting.length ? `
+          <div style="font-size:14px;font-weight:700;color:var(--muted);margin-bottom:8px">Still waiting for:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center">
+            ${waiting.map(n => `<span style="background:var(--card2);border:1px solid var(--border);border-radius:100px;padding:4px 13px;font-size:13px;font-weight:700">${n}</span>`).join('')}
+          </div>` : `<div style="color:var(--green);font-weight:700">Everyone answered! Moving on…</div>`}
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="card">
+    <div class="host-wrap">
+      <div class="host-icon">🎤</div>
+      <div class="host-bubble">
+        <div class="host-name">Alex · Host</div>
+        Question ${qIdx + 1} of ${numQs}:
+      </div>
+    </div>
+    <div class="q-dots">${dots}</div>
+    <div style="font-size:19px;font-weight:800;line-height:1.4;margin-bottom:18px">"${question}"</div>
+    <textarea id="ansIn" placeholder="Type your answer here…" maxlength="160"></textarea>
+    <button class="btn" onclick="doAnswer(${qIdx})">Submit →</button>
+  </div>`;
+}
+
+function sMatching(r) {
+  const turnIdx  = r.currentTurnIdx   || 0;
+  const qIdx     = r.currentMatchQIdx || 0;
+  const cur      = playerAt(r, turnIdx);
+  if (!cur) return sLoading();
+
+  const ids     = playerOrder(r);
+  const isMyTurn = cur.id === myId;
+  const numQs   = Object.keys(r.questions || {}).length;
+
+  // Mini scoreboard for waiting screen
+  const miniScores = ids.map((id, i) => {
+    const p = r.players[id];
+    return `<div style="display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--card2);border-radius:8px">
+      ${avHtml(i, true)}
+      <span style="flex:1;font-size:13px;font-weight:700">${p.name}</span>
+      <span style="font-size:13px;font-weight:800;color:${pColor(i)}">${p.score || 0}</span>
+    </div>`;
+  }).join('');
+
+  if (!isMyTurn) {
+    const amHost = r.hostId === myId;
+    return `
+    <div class="card">
+      <div class="host-wrap">
+        <div class="host-icon">🎤</div>
+        <div class="host-bubble">
+          <div class="host-name">Alex · Host</div>
+          It's <strong>${cur.name}'s</strong> turn to match! Sit tight… 🎯
+        </div>
+      </div>
+      <div style="text-align:center;padding:24px 0 16px">
+        <div style="font-size:42px;margin-bottom:8px">🎯</div>
+        <div style="font-size:22px;font-weight:800">${cur.name}</div>
+        <div style="color:var(--muted);font-size:14px;margin-top:4px">is on Q${qIdx+1} of ${numQs}…</div>
+      </div>
+      <div class="section-label">Scores</div>
+      <div style="display:flex;flex-direction:column;gap:6px">${miniScores}</div>
+      ${amHost ? `<button class="btn-ghost" style="margin-top:14px;font-size:13px;opacity:.6" onclick="doSkipTurn()">Skip ${cur.name}'s turn (host only)</button>` : ''}
+    </div>`;
+  }
+
+  // My matching turn
+  const shuffled   = getShuffled(r, turnIdx, qIdx);
+  const question   = r.questions?.[qIdx] || '';
+  const usedNames  = new Set(Object.values(L.assigns));
+  const allDone    = Object.keys(L.assigns).length === shuffled.length;
+  const otherIds   = ids.filter(id => id !== cur.id);
+
+  const dots = Array.from({length: numQs}, (_, i) =>
+    `<div class="q-dot${i < qIdx ? ' done' : i === qIdx ? ' cur' : ''}"></div>`
+  ).join('');
+
+  const cards = shuffled.map((a, i) => {
+    const assigned = L.assigns[i];
+    let badge = '';
+    if (assigned) {
+      const ai = ids.findIndex(id => r.players[id]?.name === assigned);
+      const c  = pColor(ai >= 0 ? ai : 0);
+      badge = `<span style="padding:2px 9px;border-radius:100px;font-size:11px;font-weight:700;background:${c}22;color:${c};border:1px solid ${c}55;white-space:nowrap">${assigned}</span>`;
+    }
+    return `<div class="ans-card${L.selAns === i ? ' selected' : ''}" onclick="selAns(${i})">
+      <div class="ans-lbl">${String.fromCharCode(65+i)}</div>
+      <div class="ans-text">"${a.text}"</div>
+      ${badge}
+    </div>`;
+  }).join('');
+
+  const plBtns = otherIds.map(id => {
+    const i    = ids.indexOf(id);
+    const c    = pColor(i);
+    const name = r.players[id]?.name || '?';
+    const used = usedNames.has(name);
+    return `<button class="pl-btn${used ? ' used' : ''}"
+      style="border-color:${c};color:${c};background:${used ? c+'18' : 'transparent'}"
+      ${L.selAns === null ? 'disabled' : ''}
+      onclick="assignPl('${name.replace(/'/g,"\\'")}'">${name}</button>`;
+  }).join('');
+
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:12px">
+    <div style="font-weight:800;font-size:15px">Your Turn! 🎯</div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:13px;font-weight:700">
+      ⭐ ${r.players[myId]?.score || 0} pts
+    </div>
+  </div>
+  <div class="card">
+    <div class="q-dots">${dots}</div>
+    <div class="host-wrap">
+      <div class="host-icon">🎤</div>
+      <div class="host-bubble">
+        <div class="host-name">Alex · Host</div>
+        Q${qIdx+1}: <strong>"${question}"</strong>
+      </div>
+    </div>
+    <div class="tip">${L.selAns === null ? '👆 Tap an answer, then tap the player who wrote it' : '✅ Now tap the player who wrote that answer'}</div>
+    <div class="answer-cards">${cards}</div>
+    <div class="player-btns">${plBtns}</div>
+    <button class="btn" style="margin-top:12px" ${allDone ? '' : 'disabled'} onclick="doSubmitMatch(${qIdx})">
+      ${qIdx < NUM_QS - 1 ? 'Submit →' : 'Submit Final Answer! 🏁'}
+    </button>
+  </div>`;
+}
+
+function sTurnResult(r) {
+  const turnIdx  = r.currentTurnIdx || 0;
+  const cur      = playerAt(r, turnIdx);
+  if (!cur) return sLoading();
+
+  const ids      = playerOrder(r);
+  const ci       = ids.indexOf(cur.id);
+  const c        = pColor(ci);
+  const amHost   = r.hostId === myId;
+  const isDone   = (turnIdx + 1) >= ids.length;
+
+  const resItems = r.lastTurnResults ? Object.values(r.lastTurnResults) : [];
+  const resHtml  = resItems.map(item => {
+    const ok  = item.correct;
+    const ai  = ids.findIndex(id => r.players[id]?.name === item.actual);
+    const wi  = ids.findIndex(id => r.players[id]?.name === item.assigned);
+    return `<div class="result-item ${ok ? 'correct' : 'wrong'}">
+      <span style="font-size:18px">${ok ? '✅' : '❌'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:2px">${item.question}</div>
+        <div style="font-size:13px;font-weight:700">
+          ${ok
+            ? `"${item.text}" — <span style="color:${pColor(ai)}">${item.actual}</span> ✓`
+            : `"${item.text}" — said <span style="color:${pColor(wi)}">${item.assigned}</span>, was <span style="color:${pColor(ai)}">${item.actual}</span>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const sorted   = [...ids].sort((a,b) => (r.players[b]?.score||0)-(r.players[a]?.score||0));
+  const scoreRows = sorted.map((id, rank) => {
+    const i = ids.indexOf(id);
+    const p = r.players[id];
+    return `<div class="score-row${rank===0?' leader':''}">
+      <span style="font-size:15px;width:22px;text-align:center">${RANKS[rank]}</span>
+      ${avHtml(i, true)}
+      <span style="flex:1;font-size:14px;font-weight:700">${p.name}</span>
+      <span style="font-size:14px;font-weight:800;color:${pColor(i)}">${p.score||0} pts</span>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="host-wrap">
+      <div class="host-icon">🎤</div>
+      <div class="host-bubble">
+        <div class="host-name">Alex · Host</div>
+        ${r.sideComment || '…'}
+      </div>
+    </div>
+    ${resHtml ? `<div style="margin-bottom:14px">${resHtml}</div>` : ''}
+    <div style="text-align:center;padding:16px;background:${c}15;border:1px solid ${c}40;border-radius:14px;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px">${cur.name}'s Score</div>
+      <div style="font-size:50px;font-weight:900;color:${c}">${cur.score || 0}</div>
+      <div style="font-size:13px;color:var(--muted)">total points</div>
+    </div>
+    <div class="section-label">Scoreboard</div>
+    ${scoreRows}
+    ${amHost
+      ? `<button class="btn" style="margin-top:14px" onclick="doNextTurn()">${isDone ? '🏆 Final Results!' : 'Next Player →'}</button>`
+      : `<div style="text-align:center;padding:12px;color:var(--muted);font-size:13px;font-weight:600;margin-top:12px">⏳ Waiting for host…</div>`}
+  </div>`;
+}
+
+function sDone(r) {
+  const ids    = playerOrder(r);
+  const sorted = [...ids].sort((a,b) => (r.players[b]?.score||0)-(r.players[a]?.score||0));
+  const tie    = sorted.length > 1 && r.players[sorted[0]]?.score === r.players[sorted[1]]?.score;
+  const winner = r.players[sorted[0]];
+
+  const rows = sorted.map((id, rank) => {
+    const i = ids.indexOf(id);
+    const p = r.players[id];
+    return `<div class="score-row${rank===0?' leader':''}">
+      <span style="font-size:15px;width:22px;text-align:center">${RANKS[rank]}</span>
+      ${avHtml(i, true)}
+      <span style="flex:1;font-size:14px;font-weight:700">${p.name}</span>
+      <span style="font-size:14px;font-weight:800;color:${pColor(i)}">${p.score||0} pts</span>
+    </div>`;
+  }).join('');
+
+  return `
+  <div style="text-align:center;margin-bottom:22px">
+    <div style="font-size:58px;margin-bottom:8px">${tie ? '🤝' : '🏆'}</div>
+    <div style="font-size:clamp(28px,6vw,46px);font-weight:900;line-height:1.1;margin-bottom:8px">
+      ${tie ? "It's a Tie!" : `${winner?.name} Wins!`}
+    </div>
+    <div style="color:var(--muted);font-size:14px">
+      ${tie ? 'Great minds think alike!' : `With ${r.players[sorted[0]]?.score} points! 🎉`}
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Final Scores</div>
+    ${rows}
+    <button class="btn" style="margin-top:18px" onclick="goHome()">Play Again! 🔄</button>
+  </div>`;
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+async function doCreate() {
+  if (!READY) return;
+  const name = document.getElementById('createName')?.value.trim();
+  if (!name) { alert('Enter your name first!'); return; }
+
+  const code = genCode();
+  L.code = code;
+
+  await set(rRef(), {
+    hostId: myId,
+    phase: 'lobby',
+    currentQIdx: 0,
+    currentMatchQIdx: 0,
+    currentTurnIdx: 0,
+    questions: {},
+    playerOrder: { 0: myId },
+    players: { [myId]: { name, score: 0, answers: {} } },
+  });
+
+  listenRoom();
+}
+
+async function doJoin() {
+  if (!READY) return;
+  const name = document.getElementById('joinName')?.value.trim();
+  const code = document.getElementById('joinCode')?.value.trim().toUpperCase();
+  if (!name) { alert('Enter your name!'); return; }
+  if (!code || code.length < 4) { alert('Enter a valid room code!'); return; }
+
+  const snap = await get(ref(db, `rooms/${code}`));
+  if (!snap.exists()) { alert('Room not found! Check the code.'); return; }
+  const room = snap.val();
+  if (room.phase !== 'lobby') { alert('That game has already started!'); return; }
+
+  const existingIds = Object.values(room.playerOrder || {});
+  if (existingIds.includes(myId)) {
+    // Rejoin
+    L.code = code;
+    listenRoom();
+    return;
+  }
+
+  const newIdx = existingIds.length;
+  L.code = code;
+
+  await update(ref(db, `rooms/${code}`), {
+    [`players/${myId}`]:         { name, score: 0, answers: {} },
+    [`playerOrder/${newIdx}`]:   myId,
+  });
+
+  listenRoom();
+}
+
+function listenRoom() {
+  if (L.unsub) L.unsub();
+  let prevPhase = null;
+  let prevTurn  = null;
+  let prevQIdx  = null;
+
+  L.unsub = onValue(rRef(), snap => {
+    const room = snap.val();
+    const newPhase = room?.phase;
+    const newTurn  = room?.currentTurnIdx;
+    const newQIdx  = room?.currentMatchQIdx;
+
+    // Reset local match state when turn/question changes
+    if (newPhase === 'matching' && (newTurn !== prevTurn || newQIdx !== prevQIdx)) {
+      L.assigns = {}; L.selAns = null;
+    }
+
+    // Confetti on game end
+    if (prevPhase !== 'done' && newPhase === 'done') setTimeout(confetti, 300);
+
+    prevPhase = newPhase; prevTurn = newTurn; prevQIdx = newQIdx;
+    L.room = room;
+    render();
+  });
+}
+
+async function doStart() {
+  const qMap = {};
+  pickQs().forEach((q, i) => qMap[i] = q);
+  await update(rRef(), { phase: 'qa', currentQIdx: 0, questions: qMap });
+}
+
+async function doAnswer(qIdx) {
+  const answer = document.getElementById('ansIn')?.value.trim();
+  if (!answer) return;
+
+  await update(rRef(`players/${myId}`), { [`answers/${qIdx}`]: answer });
+
+  // Check all answered — use transaction to avoid races
+  const snap = await get(rRef());
+  const room = snap.val();
+  if (!allAnsweredQ(room, qIdx)) return;
+
+  const numQs = Object.keys(room.questions || {}).length;
+  if (qIdx + 1 < numQs) {
+    await runTransaction(rRef('currentQIdx'), cur => cur === qIdx ? qIdx + 1 : undefined);
+  } else {
+    const committed = (await runTransaction(rRef('phase'), cur => cur === 'qa' ? 'matching' : undefined)).committed;
+    if (committed) await update(rRef(), { currentTurnIdx: 0, currentMatchQIdx: 0 });
+  }
+}
+
+function selAns(i) {
+  L.selAns = L.selAns === i ? null : i;
+  render();
+}
+
+function assignPl(name) {
+  if (L.selAns === null) return;
+  for (const k of Object.keys(L.assigns)) {
+    if (L.assigns[k] === name) delete L.assigns[k];
+  }
+  L.assigns[L.selAns] = name;
+  L.selAns = null;
+  render();
+}
+
+async function doSubmitMatch(qIdx) {
+  const r        = L.room;
+  const turnIdx  = r.currentTurnIdx || 0;
+  const shuffled = getShuffled(r, turnIdx, qIdx);
+  const ids      = playerOrder(r);
+
+  let pts = 0;
+  const resultItems = {};
+  shuffled.forEach((a, i) => {
+    const assigned = L.assigns[i] || '?';
+    const correct  = assigned === a.playerName;
+    if (correct) pts++;
+    resultItems[i] = { text: a.text, assigned, actual: a.playerName, question: r.questions?.[qIdx] || '', correct };
+  });
+
+  const newScore = (r.players[myId]?.score || 0) + pts;
+  const nextQIdx = qIdx + 1;
+
+  if (nextQIdx < NUM_QS) {
+    // More questions in this turn — just advance question
+    L.assigns = {}; L.selAns = null;
+    await update(rRef(), {
+      [`players/${myId}/score`]: newScore,
+      currentMatchQIdx: nextQIdx,
+      lastTurnResults: resultItems,
+    });
+  } else {
+    // Turn complete
+    await update(rRef(), {
+      [`players/${myId}/score`]: newScore,
+      phase:           'turnResult',
+      sideComment:     sideComment(r.players[myId]?.name || ''),
+      lastTurnResults: resultItems,
+    });
+  }
+}
+
+async function doNextTurn() {
+  const r       = L.room;
+  const ids     = playerOrder(r);
+  const nextIdx = (r.currentTurnIdx || 0) + 1;
+
+  if (nextIdx >= ids.length) {
+    await update(rRef(), { phase: 'done' });
+  } else {
+    L.assigns = {}; L.selAns = null;
+    await update(rRef(), { phase: 'matching', currentTurnIdx: nextIdx, currentMatchQIdx: 0 });
+  }
+}
+
+async function doSkipTurn() {
+  await doNextTurn();
+}
+
+function goHome() {
+  if (L.unsub) L.unsub();
+  L.code = ''; L.room = null; L.assigns = {}; L.selAns = null;
+  render();
+}
+
+// ── Confetti ───────────────────────────────────────────────────────────────
+function confetti() {
+  const cols = ['#7c6fff','#f472b6','#fbbf24','#4ade80','#60a5fa','#fb923c'];
+  for (let i = 0; i < 70; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-bit';
+      const sz = 7 + Math.random() * 8;
+      el.style.cssText = `left:${Math.random()*100}vw;top:-14px;width:${sz}px;height:${sz}px;` +
+        `background:${cols[Math.floor(Math.random()*cols.length)]};` +
+        `border-radius:${Math.random()>.5?'50%':'3px'};` +
+        `animation-duration:${1.8+Math.random()*2}s;animation-delay:${Math.random()*.6}s`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }, i * 25);
+  }
+}
+
+// ── Expose to inline handlers & boot ──────────────────────────────────────
+Object.assign(window, { doCreate, doJoin, doStart, doAnswer, selAns, assignPl, doSubmitMatch, doNextTurn, doSkipTurn, goHome });
+render();
+</script>
+</body>
+</html>
