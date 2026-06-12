@@ -388,8 +388,8 @@ function sR1QA(r) {
     <textarea id="r1ans_${qIdx}" placeholder="Your answer…" maxlength="160"
       oninput="saveR1Draft(${qIdx},this.value)">${L.r1draft[qIdx]||''}</textarea>
     <div class="q-nav">
-      ${qIdx>0?`<button class="btn-sm" onclick="L.r1qPage=${qIdx-1};render()">← Prev</button>`:'<span></span>'}
-      ${qIdx<numQs-1?`<button class="btn-sm" onclick="L.r1qPage=${qIdx+1};render()">Next →</button>`:''}
+      ${qIdx>0?`<button class="btn-sm" onclick="r1Nav(${qIdx-1})">← Prev</button>`:'<span></span>'}
+      ${qIdx<numQs-1?`<button class="btn-sm" onclick="r1Nav(${qIdx+1})">Next →</button>`:''}
     </div>
     <button class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR1()">
       Submit All Answers ✅
@@ -485,8 +485,8 @@ function sR2QA(r) {
     <textarea id="r2ans_${cur.idx}" placeholder="Your answer…" maxlength="160"
       oninput="saveR2Draft(${cur.idx},this.value)">${L.r2draft[cur.idx]||''}</textarea>
     <div class="q-nav">
-      ${qPage>0?`<button class="btn-sm" onclick="L.r2qPage=${qPage-1};render()">← Prev</button>`:'<span></span>'}
-      ${qPage<r2qs.length-1?`<button class="btn-sm" onclick="L.r2qPage=${qPage+1};render()">Next →</button>`:''}
+      ${qPage>0?`<button class="btn-sm" onclick="r2Nav(${qPage-1})">← Prev</button>`:'<span></span>'}
+      ${qPage<r2qs.length-1?`<button class="btn-sm" onclick="r2Nav(${qPage+1})">Next →</button>`:''}
     </div>
     <button class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR2()">
       Submit All Answers ✅
@@ -1056,7 +1056,9 @@ function confetti(){
 }
 
 // ── EXPOSE & BOOT ──────────────────────────────────────────────────────────
-Object.assign(window,{doCreate,doJoin,doStart,saveR1Draft,doSubmitAllR1,selOpt,doSubmitMatchAnswer,doForceReveal,doNextMatchQ,doSubmitR2Question,saveR2Draft,doSubmitAllR2,goHome});
+function r1Nav(idx){L.r1qPage=idx;render();}
+function r2Nav(idx){L.r2qPage=idx;render();}
+Object.assign(window,{doCreate,doJoin,doStart,saveR1Draft,doSubmitAllR1,selOpt,doSubmitMatchAnswer,doForceReveal,doNextMatchQ,doSubmitR2Question,saveR2Draft,doSubmitAllR2,goHome,r1Nav,r2Nav});
 
 // Try to auto-rejoin if we have a saved code
 if(L.code){
