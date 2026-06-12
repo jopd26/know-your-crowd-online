@@ -391,7 +391,7 @@ function sR1QA(r) {
       ${qIdx>0?`<button class="btn-sm" onclick="r1Nav(${qIdx-1})">← Prev</button>`:'<span></span>'}
       ${qIdx<numQs-1?`<button class="btn-sm" onclick="r1Nav(${qIdx+1})">Next →</button>`:''}
     </div>
-    <button class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR1()">
+    <button id="r1submitbtn" class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR1()">
       Submit All Answers ✅
     </button>
   </div>`;
@@ -428,9 +428,9 @@ function sR2Submit(r) {
     </div>
     <div style="font-size:16px;font-weight:800;margin-bottom:10px">📝 Your question for everyone:</div>
     <textarea id="r2q" placeholder="Ask something interesting…" maxlength="160"
-      oninput="L.r2qdraft=this.value;render()">${L.r2qdraft}</textarea>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Min 6 characters · ${160-(L.r2qdraft?.length||0)} left</div>
-    <button class="btn" ${canSubmit?'':'disabled'} onclick="doSubmitR2Question()">Submit Question →</button>
+      oninput="setR2QDraft(this.value)">${L.r2qdraft}</textarea>
+    <div id="r2charcount" style="font-size:12px;color:var(--muted);margin-bottom:10px">Min 6 characters · ${160-(L.r2qdraft?.length||0)} left</div>
+    <button id="r2submitbtn" class="btn" ${canSubmit?'':'disabled'} onclick="doSubmitR2Question()">Submit Question →</button>
   </div>`;
 }
 
@@ -457,7 +457,7 @@ function sR2QA(r) {
   // Show questions from other players (not my own)
   const r2qs = Object.entries(r.r2questions||{})
     .filter(([,q])=>q.authorId!==myId)
-    .map(([idx,q])=>({idx:+idx,...q}));
+    .map(([key,q])=>({key,...q}));
 
   if (!r2qs.length) {
     return `<div class="card"><div class="round-badge">🎯 Round 2 — Q&amp;A</div>
@@ -469,8 +469,8 @@ function sR2QA(r) {
   const qPage = Math.min(L.r2qPage, r2qs.length-1);
   const cur   = r2qs[qPage];
   const author = r.players?.[cur.authorId]?.name || '?';
-  const allFilled = r2qs.every(q=>L.r2draft[q.idx]?.trim());
-  const dots = r2qs.map((_,i)=>`<div class="q-dot${L.r2draft[r2qs[i].idx]?' done':i===qPage?' cur':''}"></div>`).join('');
+  const allFilled = r2qs.every(q=>L.r2draft[q.key]?.trim());
+  const dots = r2qs.map((_,i)=>`<div class="q-dot${L.r2draft[r2qs[i].key]?' done':i===qPage?' cur':''}"></div>`).join('');
 
   return `<div class="card">
     <div class="round-badge">🎯 Round 2 — Q&amp;A (${r2qs.length} questions)</div>
@@ -482,13 +482,13 @@ function sR2QA(r) {
     <div class="q-dots">${dots}</div>
     <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">Question ${qPage+1} of ${r2qs.length}</div>
     <div style="font-size:18px;font-weight:800;line-height:1.4;margin-bottom:14px">"${cur.text}"</div>
-    <textarea id="r2ans_${cur.idx}" placeholder="Your answer…" maxlength="160"
-      oninput="saveR2Draft(${cur.idx},this.value)">${L.r2draft[cur.idx]||''}</textarea>
+    <textarea id="r2ans_${cur.key}" placeholder="Your answer…" maxlength="160"
+      oninput="saveR2Draft('${cur.key}',this.value)">${L.r2draft[cur.key]||''}</textarea>
     <div class="q-nav">
       ${qPage>0?`<button class="btn-sm" onclick="r2Nav(${qPage-1})">← Prev</button>`:'<span></span>'}
       ${qPage<r2qs.length-1?`<button class="btn-sm" onclick="r2Nav(${qPage+1})">Next →</button>`:''}
     </div>
-    <button class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR2()">
+    <button id="r2qasubmitbtn" class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR2()">
       Submit All Answers ✅
     </button>
   </div>`;
@@ -784,8 +784,29 @@ async function doStart() {
 }
 
 // Save answer drafts locally (no Firebase until submit)
-function saveR1Draft(qIdx,val){L.r1draft[qIdx]=val;}
-function saveR2Draft(qIdx,val){L.r2draft[qIdx]=val;}
+function saveR1Draft(qIdx,val){
+  L.r1draft[qIdx]=val;
+  const r=L.room;if(!r)return;
+  const qs=Object.values(r.r1questions||{});
+  const allFilled=qs.every((_,i)=>(L.r1draft[i]||'').trim());
+  const btn=document.getElementById('r1submitbtn');
+  if(btn)btn.disabled=!allFilled;
+}
+function saveR2Draft(key,val){
+  L.r2draft[key]=val;
+  const r=L.room;if(!r)return;
+  const r2qs=Object.entries(r.r2questions||{}).filter(([,q])=>q.authorId!==myId);
+  const allFilled=r2qs.every(([k])=>(L.r2draft[k]||'').trim());
+  const btn=document.getElementById('r2qasubmitbtn');
+  if(btn)btn.disabled=!allFilled;
+}
+function setR2QDraft(val){
+  L.r2qdraft=val;
+  const btn=document.getElementById('r2submitbtn');
+  if(btn)btn.disabled=val.trim().length<=5;
+  const ctr=document.getElementById('r2charcount');
+  if(ctr)ctr.textContent=`Min 6 characters · ${160-val.length} left`;
+}
 
 async function doSubmitAllR1() {
   const r=L.room;
@@ -869,18 +890,10 @@ async function checkAllR2Submitted() {
 
 async function doSubmitAllR2() {
   const r=L.room;
-  const r2qs=Object.entries(r.r2questions||{}).filter(([,q])=>q.authorId!==myId);
   const updates={};
-  r2qs.forEach(([key,q],i)=>{
-    const qIdx=i; // local index in our list
-    const ans=L.r2draft[Object.keys(r.r2questions||{}).indexOf(key)]||GENERIC_ANSWERS[i%GENERIC_ANSWERS.length];
-    updates[`r2questions/${key}/answers/${myId}`]=L.r2draft[Object.keys(r.r2questions||{}).indexOf(key)]||GENERIC_ANSWERS[i%GENERIC_ANSWERS.length];
-  });
-  // Actually map by r2questions key
   Object.entries(r.r2questions||{}).forEach(([key,q])=>{
     if (q.authorId===myId) return;
-    const keyIdx=Object.keys(r.r2questions||{}).indexOf(key);
-    updates[`r2questions/${key}/answers/${myId}`]=L.r2draft[keyIdx]?.trim()||GENERIC_ANSWERS[keyIdx%GENERIC_ANSWERS.length];
+    updates[`r2questions/${key}/answers/${myId}`]=L.r2draft[key]?.trim()||GENERIC_ANSWERS[Math.floor(Math.random()*GENERIC_ANSWERS.length)];
   });
   updates[`players/${myId}/r2done`]=true;
   await update(rRef(),updates);
@@ -1032,8 +1045,7 @@ function listenRoom(){
       // Restore r2 drafts
       Object.entries(room.r2questions||{}).forEach(([key,q])=>{
         if(q.authorId===myId) return;
-        const keyIdx=Object.keys(room.r2questions||{}).indexOf(key);
-        if(q.answers?.[myId]) L.r2draft[keyIdx]=q.answers[myId];
+        if(q.answers?.[myId]) L.r2draft[key]=q.answers[myId];
       });
     }
     L.room=room;
@@ -1058,7 +1070,7 @@ function confetti(){
 // ── EXPOSE & BOOT ──────────────────────────────────────────────────────────
 function r1Nav(idx){L.r1qPage=idx;render();}
 function r2Nav(idx){L.r2qPage=idx;render();}
-Object.assign(window,{doCreate,doJoin,doStart,saveR1Draft,doSubmitAllR1,selOpt,doSubmitMatchAnswer,doForceReveal,doNextMatchQ,doSubmitR2Question,saveR2Draft,doSubmitAllR2,goHome,r1Nav,r2Nav});
+Object.assign(window,{doCreate,doJoin,doStart,saveR1Draft,doSubmitAllR1,selOpt,doSubmitMatchAnswer,doForceReveal,doNextMatchQ,doSubmitR2Question,saveR2Draft,setR2QDraft,doSubmitAllR2,goHome,r1Nav,r2Nav});
 
 // Try to auto-rejoin if we have a saved code
 if(L.code){
