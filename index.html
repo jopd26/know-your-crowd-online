@@ -373,17 +373,17 @@ function sR1QA(r) {
   const q = qs[qIdx] || '';
   const numQs = qs.length;
   const dots = qs.map((_,i)=>`<div class="q-dot${L.r1draft[i]?' done':i===qIdx?' cur':''}"></div>`).join('');
-  const allFilled = qs.every((_,i)=>L.r1draft[i]?.trim());
+  const answeredCount = qs.filter((_,i)=>L.r1draft[i]?.trim()).length;
 
   return `<div class="card">
     <div class="round-badge">⭐ Round 1 — Q&amp;A</div>
     <div class="host-wrap"><div class="host-icon">🎤</div>
       <div class="host-bubble"><div class="host-name">Alex · Host</div>
-        Hey ${me.name||'there'}! Answer all ${numQs} questions at your own pace, then submit.
+        Hey ${me.name||'there'}! Answer all ${numQs} questions at your own pace, then submit when you're done.
       </div>
     </div>
     <div class="q-dots">${dots}</div>
-    <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px">Question ${qIdx+1} of ${numQs}</div>
+    <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:6px">Question ${qIdx+1} of ${numQs} &nbsp;·&nbsp; ${answeredCount}/${numQs} answered</div>
     <div style="font-size:18px;font-weight:800;line-height:1.4;margin-bottom:14px">"${q}"</div>
     <textarea id="r1ans_${qIdx}" placeholder="Your answer…" maxlength="160"
       oninput="saveR1Draft(${qIdx},this.value)">${L.r1draft[qIdx]||''}</textarea>
@@ -391,7 +391,7 @@ function sR1QA(r) {
       ${qIdx>0?`<button class="btn-sm" onclick="r1Nav(${qIdx-1})">← Prev</button>`:'<span></span>'}
       ${qIdx<numQs-1?`<button class="btn-sm" onclick="r1Nav(${qIdx+1})">Next →</button>`:''}
     </div>
-    <button id="r1submitbtn" class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR1()">
+    <button class="btn" style="margin-top:8px" onclick="doSubmitAllR1()">
       Submit All Answers ✅
     </button>
   </div>`;
@@ -469,7 +469,7 @@ function sR2QA(r) {
   const qPage = Math.min(L.r2qPage, r2qs.length-1);
   const cur   = r2qs[qPage];
   const author = r.players?.[cur.authorId]?.name || '?';
-  const allFilled = r2qs.every(q=>L.r2draft[q.key]?.trim());
+  const answeredCount2 = r2qs.filter(q=>L.r2draft[q.key]?.trim()).length;
   const dots = r2qs.map((_,i)=>`<div class="q-dot${L.r2draft[r2qs[i].key]?' done':i===qPage?' cur':''}"></div>`).join('');
 
   return `<div class="card">
@@ -480,7 +480,7 @@ function sR2QA(r) {
       </div>
     </div>
     <div class="q-dots">${dots}</div>
-    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">Question ${qPage+1} of ${r2qs.length}</div>
+    <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">Question ${qPage+1} of ${r2qs.length} &nbsp;·&nbsp; ${answeredCount2}/${r2qs.length} answered</div>
     <div style="font-size:18px;font-weight:800;line-height:1.4;margin-bottom:14px">"${cur.text}"</div>
     <textarea id="r2ans_${cur.key}" placeholder="Your answer…" maxlength="160"
       oninput="saveR2Draft('${cur.key}',this.value)">${L.r2draft[cur.key]||''}</textarea>
@@ -488,7 +488,7 @@ function sR2QA(r) {
       ${qPage>0?`<button class="btn-sm" onclick="r2Nav(${qPage-1})">← Prev</button>`:'<span></span>'}
       ${qPage<r2qs.length-1?`<button class="btn-sm" onclick="r2Nav(${qPage+1})">Next →</button>`:''}
     </div>
-    <button id="r2qasubmitbtn" class="btn" style="margin-top:8px" ${allFilled?'':'disabled'} onclick="doSubmitAllR2()">
+    <button class="btn" style="margin-top:8px" onclick="doSubmitAllR2()">
       Submit All Answers ✅
     </button>
   </div>`;
@@ -784,22 +784,8 @@ async function doStart() {
 }
 
 // Save answer drafts locally (no Firebase until submit)
-function saveR1Draft(qIdx,val){
-  L.r1draft[qIdx]=val;
-  const r=L.room;if(!r)return;
-  const qs=Object.values(r.r1questions||{});
-  const allFilled=qs.every((_,i)=>(L.r1draft[i]||'').trim());
-  const btn=document.getElementById('r1submitbtn');
-  if(btn)btn.disabled=!allFilled;
-}
-function saveR2Draft(key,val){
-  L.r2draft[key]=val;
-  const r=L.room;if(!r)return;
-  const r2qs=Object.entries(r.r2questions||{}).filter(([,q])=>q.authorId!==myId);
-  const allFilled=r2qs.every(([k])=>(L.r2draft[k]||'').trim());
-  const btn=document.getElementById('r2qasubmitbtn');
-  if(btn)btn.disabled=!allFilled;
-}
+function saveR1Draft(qIdx,val){ L.r1draft[qIdx]=val; }
+function saveR2Draft(key,val){ L.r2draft[key]=val; }
 function setR2QDraft(val){
   L.r2qdraft=val;
   const btn=document.getElementById('r2submitbtn');
@@ -811,9 +797,19 @@ function setR2QDraft(val){
 async function doSubmitAllR1() {
   const r=L.room;
   const qs=Object.values(r.r1questions||{});
+  // Capture any textarea currently visible (in case oninput was missed)
+  qs.forEach((_,i)=>{
+    const ta=document.getElementById(`r1ans_${i}`);
+    if(ta&&ta.value.trim()) L.r1draft[i]=ta.value.trim();
+  });
+  const unanswered=qs.filter((_,i)=>!L.r1draft[i]?.trim()).length;
+  if(unanswered>0){
+    notify(`Please answer all ${qs.length} questions first! (${unanswered} left)`,3500);
+    return;
+  }
   const updates={};
   qs.forEach((_,i)=>{
-    updates[`players/${myId}/r1answers/${i}`]=L.r1draft[i]||GENERIC_ANSWERS[i%GENERIC_ANSWERS.length];
+    updates[`players/${myId}/r1answers/${i}`]=L.r1draft[i];
   });
   updates[`players/${myId}/r1done`]=true;
   await update(rRef(),updates);
@@ -890,10 +886,21 @@ async function checkAllR2Submitted() {
 
 async function doSubmitAllR2() {
   const r=L.room;
-  const updates={};
+  // Capture any textarea currently visible
   Object.entries(r.r2questions||{}).forEach(([key,q])=>{
-    if (q.authorId===myId) return;
-    updates[`r2questions/${key}/answers/${myId}`]=L.r2draft[key]?.trim()||GENERIC_ANSWERS[Math.floor(Math.random()*GENERIC_ANSWERS.length)];
+    if(q.authorId===myId) return;
+    const ta=document.getElementById(`r2ans_${key}`);
+    if(ta&&ta.value.trim()) L.r2draft[key]=ta.value.trim();
+  });
+  const r2entries=Object.entries(r.r2questions||{}).filter(([,q])=>q.authorId!==myId);
+  const unanswered=r2entries.filter(([k])=>!L.r2draft[k]?.trim()).length;
+  if(unanswered>0){
+    notify(`Please answer all ${r2entries.length} questions first! (${unanswered} left)`,3500);
+    return;
+  }
+  const updates={};
+  r2entries.forEach(([key])=>{
+    updates[`r2questions/${key}/answers/${myId}`]=L.r2draft[key];
   });
   updates[`players/${myId}/r2done`]=true;
   await update(rRef(),updates);
